@@ -11,7 +11,11 @@ contract NFT is ERC721Enumerable, Ownable {
     string public baseExtension = ".json";
     uint256 public cost;
     uint256 public maxSupply;
+    uint256 public maxMintAmount;
     uint256 public allowMintingOn;
+    bool public isPaused = false;
+
+    mapping(address => bool) private whitelist;
 
     event Mint(uint256 amount, address minter);
     event Withdraw(uint256 amount, address owner);
@@ -21,11 +25,13 @@ contract NFT is ERC721Enumerable, Ownable {
         string memory _symbol,
         uint256 _cost,
         uint256 _maxSupply,
+        uint256 _maxMintAmount,
         uint256 _allowMintingOn,
         string memory _baseURI
     ) ERC721(_name, _symbol) {
         cost = _cost;
         maxSupply = _maxSupply;
+        maxMintAmount = _maxMintAmount;
         allowMintingOn = _allowMintingOn;
         baseURI = _baseURI;
     }
@@ -33,10 +39,15 @@ contract NFT is ERC721Enumerable, Ownable {
     function mint(uint256 _mintAmount) public payable {
         // Only allow minting after specified time
         require(block.timestamp >= allowMintingOn);
-        // Must mint at least 1 token
+        // Must mint at least 1 token and less than maxMintAmount
         require(_mintAmount > 0);
+        require(_mintAmount <= maxMintAmount, "Mint less than the max minting amount");
         // Require enough payment
         require(msg.value >= cost * _mintAmount);
+        // Require to be not paused
+        require(isPaused == false);
+        // Require to be on the whitelist
+        require(whitelist[msg.sender], "Minter must be whitelisted");
 
         uint256 supply = totalSupply();
 
@@ -74,6 +85,10 @@ contract NFT is ERC721Enumerable, Ownable {
         return tokenIds;
     }
 
+    function isWhitelisted(address _user) public view returns (bool) {
+        return whitelist[_user];
+    }
+
     // Owner functions
 
     function withdraw() public onlyOwner {
@@ -87,5 +102,13 @@ contract NFT is ERC721Enumerable, Ownable {
 
     function setCost(uint256 _newCost) public onlyOwner {
         cost = _newCost;
+    }
+
+    function pauseMinting(bool _isPaused) public onlyOwner {
+        isPaused = _isPaused;
+    }
+
+    function addToWhitelist(address _user) public onlyOwner{
+        whitelist[_user] = true;
     }
 }
