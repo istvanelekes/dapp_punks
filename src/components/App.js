@@ -27,6 +27,7 @@ function App() {
   const [totalSupply, setTotalSupply] = useState(0)
   const [cost, setCost] = useState(0)
   const [balance, setBalance] = useState(0)
+  const [isWhitelisted, setIsWhitelisted] = useState(false)
 
   const [isLoading, setIsLoading] = useState(true)
 
@@ -51,6 +52,7 @@ function App() {
     setTotalSupply(await nft.totalSupply())
     setCost(await nft.cost())
     setBalance(await nft.balanceOf(account))
+    setIsWhitelisted(await nft.isWhitelisted(account))
 
     setIsLoading(false)
   }
@@ -92,7 +94,7 @@ function App() {
               </div>
 
               <Data maxSupply={maxSupply} totalSupply={totalSupply} cost={cost} balance={balance}/>
-              <Mint provider={provider} nft={nft} cost={cost} setIsLoading={setIsLoading}/>
+              <Mint provider={provider} nft={nft} cost={cost} isWhitelisted={isWhitelisted} setIsLoading={setIsLoading}/>
             </Col>
           </Row>
         </>
