@@ -9,6 +9,7 @@ import Navigation from './Navigation'
 import Loading from './Loading'
 import Data from './Data'
 import Mint from './Mint'
+import NFTList from './NFTList.js'
 
 // ABIs: Import your contract ABIs here
 import NFT_ABI from '../abis/NFT.json'
@@ -28,6 +29,8 @@ function App() {
   const [cost, setCost] = useState(0)
   const [balance, setBalance] = useState(0)
   const [isWhitelisted, setIsWhitelisted] = useState(false)
+  const [lastNFT, setLastNFT] = useState(0)
+  const [tokenIds, setTokenIds] = useState(null)
 
   const [isLoading, setIsLoading] = useState(true)
 
@@ -43,6 +46,11 @@ function App() {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
     const account = ethers.utils.getAddress(accounts[0])
     setAccount(account)
+
+    // Fetch last minted NFT
+    const tokenIds = await nft.walletOfOwner(account)
+    setLastNFT(tokenIds[tokenIds.length - 1])
+    setTokenIds(tokenIds)
 
     // Fetch Countdown
     const allowMintingOn = await nft.allowMintingOn()
@@ -63,6 +71,10 @@ function App() {
     }
   }, [isLoading]);
 
+  const imgUri = (tokenId) => {
+    return `https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${tokenId}.png`
+  }
+
   return(
     <Container>
       <Navigation account={account} />
@@ -78,11 +90,11 @@ function App() {
               {balance > 0 ? (
                 <div className='text-center'>
                   <img 
-                    src={`https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${balance.toString()}.png`}
+                    src={ imgUri(lastNFT.toString()) }
                     alt="Open Punk"
                     width='400px'
                     height='400px'
-                  />  
+                  />
                 </div>
               ) : (
                 <img src={preview} alt="" />
@@ -95,6 +107,7 @@ function App() {
 
               <Data maxSupply={maxSupply} totalSupply={totalSupply} cost={cost} balance={balance}/>
               <Mint provider={provider} nft={nft} cost={cost} isWhitelisted={isWhitelisted} setIsLoading={setIsLoading}/>
+              <NFTList tokenIds={tokenIds} imgUri={imgUri} />
             </Col>
           </Row>
         </>
